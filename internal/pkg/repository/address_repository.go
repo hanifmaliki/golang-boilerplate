@@ -2,28 +2,25 @@ package repository
 
 import (
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
-
 	"gorm.io/gorm"
 )
 
 type AddressRepository interface {
-	FindByToken(user *entity.User, token string) error
+	BaseRepository[entity.Address]
+	Test() (*entity.Address, error)
 }
 
 type addressRepository struct {
-	BaseRepository[entity.User]
+	baseRepository[entity.Address]
 }
 
 func NewAddressRepository(db *gorm.DB) AddressRepository {
-	r := &addressRepository{}
-	r.db = db
-	return r
+	return &addressRepository{
+		baseRepository: baseRepository[entity.Address]{db: db},
+	}
 }
 
-func (r *addressRepository) FindByToken(user *entity.User, token string) error {
-	return r.db.Where("token = ?", token).First(user).Error
-}
-
-func (r *addressRepository) CreateWithAddressCreditCard(user *entity.User, token string) error {
-	return nil
+func (r *addressRepository) Test() (*entity.Address, error) {
+	var address entity.Address
+	return &address, nil
 }

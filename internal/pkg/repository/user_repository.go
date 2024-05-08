@@ -2,24 +2,25 @@ package repository
 
 import (
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
-
 	"gorm.io/gorm"
 )
 
 type UserRepository interface {
-	FindByToken(user *entity.User, token string) error
+	BaseRepository[entity.User]
+	Test() (*entity.User, error)
 }
 
 type userRepository struct {
-	BaseRepository[entity.User]
+	baseRepository[entity.User]
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
-	r := &userRepository{}
-	r.db = db
-	return r
+	return &userRepository{
+		baseRepository: baseRepository[entity.User]{db: db},
+	}
 }
 
-func (r *userRepository) FindByToken(user *entity.User, token string) error {
-	return r.db.Where("token = ?", token).First(user).Error
+func (r *userRepository) Test() (*entity.User, error) {
+	var user entity.User
+	return &user, nil
 }
