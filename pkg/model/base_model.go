@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type BaseModel struct {
+type Base struct {
 	// gorm.Model
 
 	ID        uint           `json:"id" gorm:"primarykey"`

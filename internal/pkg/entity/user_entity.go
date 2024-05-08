@@ -3,7 +3,7 @@ package entity
 import "github.com/hanifmaliki/go-boilerplate/pkg/model"
 
 type User struct {
-	model.BaseModel
+	model.Base
 
 	Name      string
 	Email     string

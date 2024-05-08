@@ -7,15 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-var M20240428123800_users = gormigrate.Migration{
-	ID: "M20240428123800_users",
+var M20240428123804_roles = gormigrate.Migration{
+	ID: "M20240428123804_roles",
 	Migrate: func(tx *gorm.DB) error {
 		type User struct {
-			model.BaseModel
+			model.Base
 
-			Name      string
-			Email     string
-			CompanyID uint
+			Name string
 		}
 		return tx.Migrator().CreateTable(&User{})
 	},

@@ -1,4 +1,4 @@
-package migrations
+package seeds
 
 import (
 	"github.com/hanifmaliki/go-boilerplate/pkg/model"
@@ -7,17 +7,17 @@ import (
 	"gorm.io/gorm"
 )
 
-var M20240428123804_roles = gormigrate.Migration{
+var S20240428123804_roles = gormigrate.Migration{
 	ID: "M20240428123804_roles",
 	Migrate: func(tx *gorm.DB) error {
 		type User struct {
-			model.BaseModel
+			model.Base
 
 			Name string
 		}
 		return tx.Migrator().CreateTable(&User{})
 	},
 	Rollback: func(tx *gorm.DB) error {
-		return tx.Migrator().DropTable("users")
+		return nil
 	},
 }
