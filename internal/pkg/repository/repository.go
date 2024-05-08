@@ -5,6 +5,11 @@ import "gorm.io/gorm"
 type Repository interface {
 	Transaction(fn func(r Repository) error) error
 	User() UserRepository
+	Company() CompanyRepository
+	Address() AddressRepository
+	CreditCard() CreditCardRepository
+	Role() RoleRepository
+	UserRole() UserRoleRepository
 }
 
 type repository struct {
@@ -25,4 +30,24 @@ func (r *repository) Transaction(fn func(r Repository) error) error {
 
 func (r *repository) User() UserRepository {
 	return NewUserRepository(r.db)
+}
+
+func (r *repository) Company() CompanyRepository {
+	return NewCompanyRepository(r.db)
+}
+
+func (r *repository) Address() AddressRepository {
+	return NewAddressRepository(r.db)
+}
+
+func (r *repository) CreditCard() CreditCardRepository {
+	return NewCreditCardRepository(r.db)
+}
+
+func (r *repository) Role() RoleRepository {
+	return NewRoleRepository(r.db)
+}
+
+func (r *repository) UserRole() UserRoleRepository {
+	return NewUserRoleRepository(r.db)
 }

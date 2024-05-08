@@ -27,11 +27,11 @@ func (r *baseRepository[T]) Delete(entity *T) error {
 }
 
 func (r *baseRepository[T]) CountById(id any) (int64, error) {
-	var total int64
-	err := r.db.Model(new(T)).Where("id = ?", id).Count(&total).Error
-	return total, err
+	var count int64
+	err := r.db.Model(new(T)).Where("id = ?", id).Count(&count).Error
+	return count, err
 }
 
 func (r *baseRepository[T]) FindById(entity *T, id any) error {
-	return r.db.Where("id = ?", id).Take(entity).Error
+	return r.db.Where("id = ?", id).First(entity).Error
 }

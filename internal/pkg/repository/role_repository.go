@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
+
 	"gorm.io/gorm"
 )
 
