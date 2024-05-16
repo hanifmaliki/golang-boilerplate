@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/hanifmaliki/go-boilerplate/pkg/model"
+	"github.com/hanifmaliki/golang-boilerplate/pkg/model"
 
 	"gorm.io/gorm"
 )

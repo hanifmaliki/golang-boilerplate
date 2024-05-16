@@ -1,7 +1,7 @@
 package seeds
 
 import (
-	"github.com/hanifmaliki/go-boilerplate/pkg/model"
+	"github.com/hanifmaliki/golang-boilerplate/pkg/model"
 
 	gormigrate "github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"

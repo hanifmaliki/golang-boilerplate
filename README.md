@@ -1,1 +1,1 @@
-# go-boilerplate
+# golang-boilerplate

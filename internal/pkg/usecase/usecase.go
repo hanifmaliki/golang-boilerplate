@@ -1,6 +1,6 @@
 package usecase
 
-import "github.com/hanifmaliki/go-boilerplate/internal/pkg/repository"
+import "github.com/hanifmaliki/golang-boilerplate/internal/pkg/repository"
 
 type UseCase interface {
 	UserUseCase

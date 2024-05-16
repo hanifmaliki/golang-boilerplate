@@ -1,4 +1,4 @@
-module github.com/hanifmaliki/go-boilerplate
+module github.com/hanifmaliki/golang-boilerplate
 
 go 1.22.0
 
