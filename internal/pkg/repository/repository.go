@@ -1,15 +1,19 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"context"
+
+	"gorm.io/gorm"
+)
 
 type Repository interface {
-	Transaction(fn func(r Repository) error) error
-	User() UserRepository
-	Company() CompanyRepository
-	Address() AddressRepository
-	CreditCard() CreditCardRepository
-	Role() RoleRepository
-	UserRole() UserRoleRepository
+	InTransaction(ctx context.Context, fn func(r Repository) error) error
+	UserRepo() UserRepository
+	CompanyRepo() CompanyRepository
+	AddressRepo() AddressRepository
+	CreditCardRepo() CreditCardRepository
+	RoleRepo() RoleRepository
+	UserRoleRepo() UserRoleRepository
 }
 
 type repository struct {
@@ -20,34 +24,34 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) Transaction(fn func(r Repository) error) error {
-	err := r.db.Transaction(func(tx *gorm.DB) error {
+func (r *repository) InTransaction(ctx context.Context, fn func(r Repository) error) error {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		return fn(NewRepository(tx))
 	})
 
 	return err
 }
 
-func (r *repository) User() UserRepository {
+func (r *repository) UserRepo() UserRepository {
 	return NewUserRepository(r.db)
 }
 
-func (r *repository) Company() CompanyRepository {
+func (r *repository) CompanyRepo() CompanyRepository {
 	return NewCompanyRepository(r.db)
 }
 
-func (r *repository) Address() AddressRepository {
+func (r *repository) AddressRepo() AddressRepository {
 	return NewAddressRepository(r.db)
 }
 
-func (r *repository) CreditCard() CreditCardRepository {
+func (r *repository) CreditCardRepo() CreditCardRepository {
 	return NewCreditCardRepository(r.db)
 }
 
-func (r *repository) Role() RoleRepository {
+func (r *repository) RoleRepo() RoleRepository {
 	return NewRoleRepository(r.db)
 }
 
-func (r *repository) UserRole() UserRoleRepository {
+func (r *repository) UserRoleRepo() UserRoleRepository {
 	return NewUserRoleRepository(r.db)
 }

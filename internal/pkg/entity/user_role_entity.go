@@ -7,4 +7,6 @@ type UserRole struct {
 
 	UserID uint
 	RoleID uint
+
+	Role *Role
 }

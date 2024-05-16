@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
 
 	"gorm.io/gorm"
@@ -8,7 +10,7 @@ import (
 
 type CreditCardRepository interface {
 	BaseRepository[entity.CreditCard]
-	Test() (*entity.CreditCard, error)
+	Test(ctx context.Context) (*entity.CreditCard, error)
 }
 
 type creditCardRepository struct {
@@ -21,7 +23,7 @@ func NewCreditCardRepository(db *gorm.DB) CreditCardRepository {
 	}
 }
 
-func (r *creditCardRepository) Test() (*entity.CreditCard, error) {
+func (r *creditCardRepository) Test(ctx context.Context) (*entity.CreditCard, error) {
 	var creditCard entity.CreditCard
 	return &creditCard, nil
 }

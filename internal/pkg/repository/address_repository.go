@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
 
 	"gorm.io/gorm"
@@ -8,7 +10,7 @@ import (
 
 type AddressRepository interface {
 	BaseRepository[entity.Address]
-	Test() (*entity.Address, error)
+	Test(ctx context.Context) (*entity.Address, error)
 }
 
 type addressRepository struct {
@@ -21,7 +23,7 @@ func NewAddressRepository(db *gorm.DB) AddressRepository {
 	}
 }
 
-func (r *addressRepository) Test() (*entity.Address, error) {
+func (r *addressRepository) Test(ctx context.Context) (*entity.Address, error) {
 	var address entity.Address
 	return &address, nil
 }

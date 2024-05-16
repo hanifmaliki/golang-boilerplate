@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
 
 	"gorm.io/gorm"
@@ -8,7 +10,7 @@ import (
 
 type CompanyRepository interface {
 	BaseRepository[entity.Company]
-	Test() (*entity.Company, error)
+	Test(ctx context.Context) (*entity.Company, error)
 }
 
 type companyRepository struct {
@@ -21,7 +23,7 @@ func NewCompanyRepository(db *gorm.DB) CompanyRepository {
 	}
 }
 
-func (r *companyRepository) Test() (*entity.Company, error) {
+func (r *companyRepository) Test(ctx context.Context) (*entity.Company, error) {
 	var company entity.Company
 	return &company, nil
 }

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/hanifmaliki/go-boilerplate/internal/pkg/entity"
 
 	"gorm.io/gorm"
@@ -8,7 +10,7 @@ import (
 
 type UserRoleRepository interface {
 	BaseRepository[entity.UserRole]
-	Test() (*entity.UserRole, error)
+	Test(ctx context.Context) (*entity.UserRole, error)
 }
 
 type userRoleRepository struct {
@@ -21,7 +23,7 @@ func NewUserRoleRepository(db *gorm.DB) UserRoleRepository {
 	}
 }
 
-func (r *userRoleRepository) Test() (*entity.UserRole, error) {
+func (r *userRoleRepository) Test(ctx context.Context) (*entity.UserRole, error) {
 	var userRole entity.UserRole
 	return &userRole, nil
 }
