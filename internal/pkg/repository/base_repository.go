@@ -26,18 +26,27 @@ func (r *baseRepository[T]) FindOne(ctx context.Context, conds *T, query *model.
 	for _, expand := range query.Expand {
 		db = db.Preload(expand)
 	}
+	if query.SortBy != "" {
+		db = db.Order(query.SortBy)
+	}
 	err := db.Where(conds).First(data).Error
 	return data, err
 }
 
 func (r *baseRepository[T]) Create(ctx context.Context, data *T) (*T, error) {
 	err := r.db.WithContext(ctx).Create(data).Error
-	return data, err
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (r *baseRepository[T]) Update(ctx context.Context, data *T) (*T, error) {
 	err := r.db.WithContext(ctx).Save(data).Error
-	return data, err
+	if err != nil {
+		return nil, err
+	}
+	return nil, err
 }
 
 func (r *baseRepository[T]) Delete(ctx context.Context, conds *T) error {

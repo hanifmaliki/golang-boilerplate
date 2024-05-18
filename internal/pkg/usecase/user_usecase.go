@@ -12,7 +12,7 @@ import (
 )
 
 type UserUseCase interface {
-	GetUser(ctx context.Context, query pkg_model.Query) (*entity.User, error)
+	GetUser(ctx context.Context, conds *entity.User, query *pkg_model.Query) (*entity.User, error)
 	GetUsers(ctx context.Context, query pkg_model.Query) ([]*entity.User, error)
 	CreateUser(ctx context.Context, request *model.CreateUserRequest) (*entity.User, error)
 	UpdateUser(ctx context.Context, request *model.CreateUserRequest) (*entity.User, error)

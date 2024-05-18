@@ -31,8 +31,9 @@ func (r *userRepository) Find(ctx context.Context, request *model.GetUserRequest
 	db := r.db.WithContext(ctx)
 	baseQuery := db
 
-	if search := request.Search; search != "" {
-		search = "%" + search + "%"
+	// Handle filter
+	if request.Search != "" {
+		search := "%" + request.Search + "%"
 		db = db.Where("name LIKE ? OR email LIKE ?", search, search)
 	}
 	if len(request.CompanyID) > 0 {
@@ -46,36 +47,43 @@ func (r *userRepository) Find(ctx context.Context, request *model.GetUserRequest
 	// New Session Methods for handle contaminated SQL queries
 	db = db.Session(&gorm.Session{})
 
-	// Init main query
-	result := db
+	// Initialize the main query
+	mainQuery := db
 
-	// Pagination
-	pagination := &pkg_model.Pagination{}
+	// Pagination setup
+	var pagination *pkg_model.Pagination
 	if query.Page > 0 && query.PageSize > 0 {
-		pagination.Page = query.Page
-		pagination.PageSize = query.PageSize
+		pagination = &pkg_model.Pagination{
+			Page:     query.Page,
+			PageSize: query.PageSize,
+		}
 
 		var totalItems int64
-		resultCount := db.Model(&entity.User{}).Count(&totalItems)
-		if resultCount.Error != nil {
-			return nil, nil, resultCount.Error
+		err := db.Model(&entity.User{}).Count(&totalItems).Error
+		if err != nil {
+			return nil, nil, err
 		}
 		pagination.TotalItems = totalItems
 		pagination.TotalPages = int(math.Ceil(float64(totalItems) / float64(query.PageSize)))
 
-		result = result.Offset((query.Page - 1) * query.PageSize).Limit(query.PageSize)
-	} else {
-		pagination = nil
+		mainQuery = mainQuery.Offset((query.Page - 1) * query.PageSize).Limit(query.PageSize)
 	}
 
+	// Handle preload/expansion of related entities
 	for _, expand := range query.Expand {
-		result = result.Preload(expand)
+		mainQuery = mainQuery.Preload(expand)
 	}
 
+	// Handle sorting
 	if query.SortBy != "" {
-		result = result.Order(query.SortBy)
+		mainQuery = mainQuery.Order(query.SortBy)
 	}
 
-	err := result.Find(datas).Error
-	return datas, pagination, err
+	// Execute the query
+	err := mainQuery.Find(&datas).Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return datas, pagination, nil
 }
