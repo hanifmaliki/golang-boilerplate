@@ -1,5 +1,11 @@
 package model
 
+type GetUserRequest struct {
+	Search    string
+	CompanyID []uint
+	RoleID    []uint
+}
+
 type CreateUserRequest struct {
 	Name      string
 	Email     string

@@ -19,9 +19,8 @@ type UserUseCase interface {
 	DeleteUser(ctx context.Context) error
 }
 
-func (u *useCase) GetUser(ctx context.Context, query pkg_model.Query) (*entity.User, error) {
-	data := &entity.User{}
-	return data, nil
+func (u *useCase) GetUser(ctx context.Context, conds *entity.User, query *pkg_model.Query) (*entity.User, error) {
+	return u.repository.UserRepo().FindOne(ctx, conds, query)
 }
 
 func (u *useCase) GetUsers(ctx context.Context, query pkg_model.Query) ([]*entity.User, error) {
