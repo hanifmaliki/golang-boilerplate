@@ -9,8 +9,9 @@ import (
 )
 
 type BaseRepository[T any] interface {
-	Create(ctx context.Context, data *T) (*T, error)
-	Update(ctx context.Context, data *T) (*T, error)
+	Create(ctx context.Context, data *T) error
+	Save(ctx context.Context, data *T) error
+	Update(ctx context.Context, data *T, conds *T) error
 	Delete(ctx context.Context, conds *T) error
 	FindOne(ctx context.Context, conds *T, query *model.Query) (*T, error)
 	Count(ctx context.Context, conds *T) (int64, error)
@@ -18,6 +19,22 @@ type BaseRepository[T any] interface {
 
 type baseRepository[T any] struct {
 	db *gorm.DB
+}
+
+func (r *baseRepository[T]) Create(ctx context.Context, data *T) error {
+	return r.db.WithContext(ctx).Create(data).Error
+}
+
+func (r *baseRepository[T]) Save(ctx context.Context, data *T) error {
+	return r.db.WithContext(ctx).Save(data).Error
+}
+
+func (r *baseRepository[T]) Update(ctx context.Context, data *T, conds *T) error {
+	return r.db.WithContext(ctx).Model(new(T)).Where(conds).Updates(data).Error
+}
+
+func (r *baseRepository[T]) Delete(ctx context.Context, conds *T) error {
+	return r.db.WithContext(ctx).Where(conds).Delete(new(T)).Error
 }
 
 func (r *baseRepository[T]) FindOne(ctx context.Context, conds *T, query *model.Query) (*T, error) {
@@ -31,26 +48,6 @@ func (r *baseRepository[T]) FindOne(ctx context.Context, conds *T, query *model.
 	}
 	err := db.Where(conds).First(data).Error
 	return data, err
-}
-
-func (r *baseRepository[T]) Create(ctx context.Context, data *T) (*T, error) {
-	err := r.db.WithContext(ctx).Create(data).Error
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func (r *baseRepository[T]) Update(ctx context.Context, data *T) (*T, error) {
-	err := r.db.WithContext(ctx).Save(data).Error
-	if err != nil {
-		return nil, err
-	}
-	return nil, err
-}
-
-func (r *baseRepository[T]) Delete(ctx context.Context, conds *T) error {
-	return r.db.WithContext(ctx).Where(conds).Delete(new(T)).Error
 }
 
 func (r *baseRepository[T]) Count(ctx context.Context, conds *T) (int64, error) {
