@@ -20,9 +20,7 @@ type UserUseCase interface {
 }
 
 func (u *useCase) GetUser(ctx context.Context, id uint, query *pkg_model.Query) (*entity.User, error) {
-	conds := &entity.User{}
-	conds.ID = id
-	return u.repository.UserRepo().FindOne(ctx, conds, query)
+	return u.repository.UserRepo().FindOne(ctx, &entity.User{Base: pkg_model.Base{ID: id}}, query)
 }
 
 func (u *useCase) GetUsers(ctx context.Context, request *model.GetUserRequest, query *pkg_model.Query) ([]*entity.User, *pkg_model.Pagination, error) {
@@ -40,9 +38,7 @@ func (u *useCase) CreateUser(ctx context.Context, request *model.CreateUserReque
 
 		user := &entity.User{}
 		copier.Copy(user, request)
-		user.CreatedBy = by
-		user.UpdatedBy = by
-		err := userRepo.Create(ctx, user)
+		err := userRepo.Create(ctx, user, by)
 		if err != nil {
 			return err
 		}
@@ -50,9 +46,7 @@ func (u *useCase) CreateUser(ctx context.Context, request *model.CreateUserReque
 		address := &entity.Address{}
 		copier.Copy(address, request.Address)
 		address.UserID = user.ID
-		address.CreatedBy = by
-		address.UpdatedBy = by
-		err = addressRepo.Create(ctx, address)
+		err = addressRepo.Create(ctx, address, by)
 		if err != nil {
 			return err
 		}
@@ -62,9 +56,7 @@ func (u *useCase) CreateUser(ctx context.Context, request *model.CreateUserReque
 			cc := &entity.CreditCard{}
 			cc.UserID = user.ID
 			cc.Number = ccRequest.Number
-			cc.CreatedBy = by
-			cc.UpdatedBy = by
-			err := ccRepo.Create(ctx, cc)
+			err := ccRepo.Create(ctx, cc, by)
 			if err != nil {
 				return err
 			}
@@ -76,9 +68,7 @@ func (u *useCase) CreateUser(ctx context.Context, request *model.CreateUserReque
 			userRole := &entity.UserRole{}
 			userRole.UserID = user.ID
 			userRole.RoleID = urRequest.RoleID
-			userRole.CreatedBy = by
-			userRole.UpdatedBy = by
-			err := userRoleRepo.Create(ctx, userRole)
+			err := userRoleRepo.Create(ctx, userRole, by)
 			if err != nil {
 				return err
 			}
@@ -110,8 +100,7 @@ func (u *useCase) UpdateUser(ctx context.Context, request *model.CreateUserReque
 
 		user := &entity.User{}
 		copier.Copy(user, request)
-		user.UpdatedBy = by
-		err := userRepo.Save(ctx, user)
+		err := userRepo.Save(ctx, user, by)
 		if err != nil {
 			return err
 		}
@@ -119,8 +108,7 @@ func (u *useCase) UpdateUser(ctx context.Context, request *model.CreateUserReque
 		address := &entity.Address{}
 		copier.Copy(address, request.Address)
 		address.UserID = user.ID
-		address.UpdatedBy = by
-		err = addressRepo.Save(ctx, address)
+		err = addressRepo.Save(ctx, address, by)
 		if err != nil {
 			return err
 		}
@@ -130,8 +118,7 @@ func (u *useCase) UpdateUser(ctx context.Context, request *model.CreateUserReque
 			cc := &entity.CreditCard{}
 			cc.UserID = user.ID
 			cc.Number = ccRequest.Number
-			cc.UpdatedBy = by
-			err := ccRepo.Save(ctx, cc)
+			err := ccRepo.Save(ctx, cc, by)
 			if err != nil {
 				return err
 			}
@@ -143,8 +130,7 @@ func (u *useCase) UpdateUser(ctx context.Context, request *model.CreateUserReque
 			userRole := &entity.UserRole{}
 			userRole.UserID = user.ID
 			userRole.RoleID = urRequest.RoleID
-			userRole.UpdatedBy = by
-			err := userRoleRepo.Save(ctx, userRole)
+			err := userRoleRepo.Save(ctx, userRole, by)
 			if err != nil {
 				return err
 			}
@@ -172,38 +158,22 @@ func (u *useCase) DeleteUser(ctx context.Context, id uint, by string) error {
 		ccRepo := r.CreditCardRepo()
 		userRoleRepo := r.UserRoleRepo()
 
-		err := userRepo.Update(ctx, &entity.User{Base: pkg_model.Base{DeletedBy: by}}, &entity.User{Base: pkg_model.Base{ID: id}})
-		if err != nil {
-			return err
-		}
-		err = userRepo.Delete(ctx, &entity.User{Base: pkg_model.Base{ID: id}})
+		err := userRepo.Delete(ctx, &entity.User{Base: pkg_model.Base{ID: id}}, by)
 		if err != nil {
 			return err
 		}
 
-		err = addressRepo.Update(ctx, &entity.Address{Base: pkg_model.Base{DeletedBy: by}}, &entity.Address{UserID: id})
-		if err != nil {
-			return err
-		}
-		err = addressRepo.Delete(ctx, &entity.Address{UserID: id})
+		err = addressRepo.Delete(ctx, &entity.Address{UserID: id}, by)
 		if err != nil {
 			return err
 		}
 
-		err = ccRepo.Update(ctx, &entity.CreditCard{Base: pkg_model.Base{DeletedBy: by}}, &entity.CreditCard{UserID: id})
-		if err != nil {
-			return err
-		}
-		err = ccRepo.Delete(ctx, &entity.CreditCard{UserID: id})
+		err = ccRepo.Delete(ctx, &entity.CreditCard{UserID: id}, by)
 		if err != nil {
 			return err
 		}
 
-		err = userRoleRepo.Update(ctx, &entity.UserRole{Base: pkg_model.Base{DeletedBy: by}}, &entity.UserRole{UserID: id})
-		if err != nil {
-			return err
-		}
-		err = userRoleRepo.Delete(ctx, &entity.UserRole{UserID: id})
+		err = userRoleRepo.Delete(ctx, &entity.UserRole{UserID: id}, by)
 		if err != nil {
 			return err
 		}
