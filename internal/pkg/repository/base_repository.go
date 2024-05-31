@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/hanifmaliki/golang-boilerplate/pkg/model"
+
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,11 @@ type baseRepository[T any] struct {
 	db *gorm.DB
 }
 
-func setField[T any](data *T, fieldName string, value string) {
+func NewBaseRepository[T any](db *gorm.DB) BaseRepository[T] {
+	return &baseRepository[T]{db: db}
+}
+
+func setField(data interface{}, fieldName, value string) {
 	v := reflect.ValueOf(data).Elem()
 	field := v.FieldByName(fieldName)
 	if field.IsValid() && field.CanSet() && field.Kind() == reflect.String {
@@ -30,35 +35,37 @@ func setField[T any](data *T, fieldName string, value string) {
 }
 
 func (r *baseRepository[T]) Create(ctx context.Context, data *T, by string) error {
-	setField(data, "CreateBy", by)
-	setField(data, "UpdateBy", by)
+	setField(data, "CreatedBy", by)
+	setField(data, "UpdatedBy", by)
 	return r.db.WithContext(ctx).Create(data).Error
 }
 
 func (r *baseRepository[T]) Save(ctx context.Context, data *T, by string) error {
 	idField := reflect.ValueOf(data).Elem().FieldByName("ID")
 	if idField.IsValid() && idField.Kind() == reflect.Int && idField.Int() == 0 {
-		setField(data, "CreateBy", by)
+		setField(data, "CreatedBy", by)
 	}
-	setField(data, "UpdateBy", by)
+	setField(data, "UpdatedBy", by)
 	return r.db.WithContext(ctx).Save(data).Error
 }
 
 func (r *baseRepository[T]) Update(ctx context.Context, data *T, conds *T, by string) error {
-	setField(data, "UpdateBy", by)
+	setField(data, "UpdatedBy", by)
 	return r.db.WithContext(ctx).Model(new(T)).Where(conds).Updates(data).Error
 }
 
 func (r *baseRepository[T]) Delete(ctx context.Context, conds *T, by string) error {
-	err := r.db.WithContext(ctx).Model(new(T)).Select("updated_at").Where(conds).Updates(map[string]interface{}{"updated_at": by}).Error
-	if err != nil {
-		return err
-	}
-	return r.db.WithContext(ctx).Where(conds).Delete(new(T)).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		err := tx.Model(new(T)).Omit("updated_at").Where(conds).Update("deleted_by", by).Error
+		if err != nil {
+			return err
+		}
+		return tx.Where(conds).Delete(new(T)).Error
+	})
 }
 
 func (r *baseRepository[T]) FindOne(ctx context.Context, conds *T, query *model.Query) (*T, error) {
-	var data *T
+	data := new(T)
 	db := r.db.WithContext(ctx)
 	for _, expand := range query.Expand {
 		db = db.Preload(expand)

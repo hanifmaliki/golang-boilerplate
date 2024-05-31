@@ -5,9 +5,9 @@ import "github.com/hanifmaliki/golang-boilerplate/pkg/model"
 type User struct {
 	model.Base
 
-	Name      string
-	Email     string
-	CompanyID uint
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	CompanyID uint   `json:"company_id"`
 
 	Company     *Company      // Belongs To relationship (one user belongs to one company)
 	Address     *Address      // Has One relationship (one user has one address)
