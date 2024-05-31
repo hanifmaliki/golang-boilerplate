@@ -5,35 +5,21 @@ import (
 	"testing"
 
 	"github.com/hanifmaliki/golang-boilerplate/internal/pkg/entity"
+	"github.com/hanifmaliki/golang-boilerplate/pkg/database/postgres"
 	pkg_model "github.com/hanifmaliki/golang-boilerplate/pkg/model"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-// Setup function to create a new repository and SQL mock
-func setupTestRepository(t *testing.T) (*baseRepository[entity.User], sqlmock.Sqlmock) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		Conn: db,
-	})
-	gormDB, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	repo := NewBaseRepository[entity.User](gormDB)
-	return repo.(*baseRepository[entity.User]), mock
-}
-
 func TestCreate(t *testing.T) {
-	repo, mock := setupTestRepository(t)
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
 	ctx := context.Background()
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","company_id","id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10\) RETURNING "id"`).
+	mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","company_id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9\) RETURNING "id"`).
 		WithArgs(
 			sqlmock.AnyArg(),          // created_at
 			sqlmock.AnyArg(),          // updated_at
@@ -44,23 +30,18 @@ func TestCreate(t *testing.T) {
 			"Hanif Maliki Dewanto",    // name
 			"hanifmaliki97@gmail.com", // email
 			uint(2),                   // company_id
-			uint(1),                   // id
 		).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 	mock.ExpectCommit()
 
 	data := &entity.User{
-		Base: pkg_model.Base{
-			ID: uint(1),
-		},
 		Name:      "Hanif Maliki Dewanto",
 		Email:     "hanifmaliki97@gmail.com",
 		CompanyID: uint(2),
 	}
 
-	err := repo.Create(ctx, data, "creator")
+	err = repo.Create(ctx, data, "creator")
 	assert.NoError(t, err)
 	assert.NotNil(t, data)
-	assert.Equal(t, uint(1), data.ID)
 	assert.Equal(t, "creator", data.CreatedBy)
 	assert.Equal(t, "creator", data.UpdatedBy)
 	assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
@@ -71,7 +52,9 @@ func TestCreate(t *testing.T) {
 }
 
 func TestSave(t *testing.T) {
-	repo, mock := setupTestRepository(t)
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
 
 	t.Run("With ID", func(t *testing.T) {
 		ctx := context.Background()
@@ -120,7 +103,7 @@ func TestSave(t *testing.T) {
 		ctx := context.Background()
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","company_id","id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10\) RETURNING "id"`).
+		mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","company_id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9\) RETURNING "id"`).
 			WithArgs(
 				sqlmock.AnyArg(),          // created_at
 				sqlmock.AnyArg(),          // updated_at
@@ -131,8 +114,7 @@ func TestSave(t *testing.T) {
 				"Hanif Maliki Dewanto",    // name
 				"hanifmaliki97@gmail.com", // email
 				uint(2),                   // company_id
-				uint(1),                   // id
-			).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+			).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("0"))
 		mock.ExpectCommit()
 
 		data := &entity.User{
@@ -144,7 +126,6 @@ func TestSave(t *testing.T) {
 		err := repo.Save(ctx, data, "creator")
 		assert.NoError(t, err)
 		assert.NotNil(t, data)
-		assert.Equal(t, uint(1), data.ID)
 		assert.Equal(t, "creator", data.CreatedBy)
 		assert.Equal(t, "creator", data.UpdatedBy)
 		assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
@@ -156,7 +137,9 @@ func TestSave(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	repo, mock := setupTestRepository(t)
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
 	ctx := context.Background()
 
 	mock.ExpectBegin()
@@ -178,14 +161,16 @@ func TestUpdate(t *testing.T) {
 	}
 	conds := &entity.User{Base: pkg_model.Base{ID: 1}}
 
-	err := repo.Update(ctx, data, conds, "updater")
+	err = repo.Update(ctx, data, conds, "updater")
 	assert.NoError(t, err)
 
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 
 func TestDelete(t *testing.T) {
-	repo, mock := setupTestRepository(t)
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
 	ctx := context.Background()
 
 	mock.ExpectBegin()
@@ -196,14 +181,16 @@ func TestDelete(t *testing.T) {
 	mock.ExpectCommit()
 
 	conds := &entity.User{Base: pkg_model.Base{ID: 1}}
-	err := repo.Delete(ctx, conds, "eraser")
+	err = repo.Delete(ctx, conds, "eraser")
 	assert.NoError(t, err)
 
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 
 func TestFindOne(t *testing.T) {
-	repo, mock := setupTestRepository(t)
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
 	ctx := context.Background()
 
 	rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "company_id"}).
@@ -228,7 +215,9 @@ func TestFindOne(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	repo, mock := setupTestRepository(t)
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
 	ctx := context.Background()
 
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "users" WHERE "users"."deleted_at" IS NULL`).

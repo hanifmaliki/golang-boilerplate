@@ -42,7 +42,7 @@ func (r *baseRepository[T]) Create(ctx context.Context, data *T, by string) erro
 
 func (r *baseRepository[T]) Save(ctx context.Context, data *T, by string) error {
 	idField := reflect.ValueOf(data).Elem().FieldByName("ID")
-	if idField.IsValid() && idField.Kind() == reflect.Int && idField.Int() == 0 {
+	if idField.IsValid() && idField.Kind() == reflect.Uint && idField.Uint() == 0 {
 		setField(data, "CreatedBy", by)
 	}
 	setField(data, "UpdatedBy", by)
