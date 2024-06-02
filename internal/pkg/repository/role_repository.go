@@ -28,22 +28,18 @@ func (r *roleRepository) Find(ctx context.Context, request *entity.Role, query *
 	var datas []*entity.Role
 	db := r.db.WithContext(ctx)
 
-	// Initialize the main query
-	mainQuery := db
-
 	// Handle preload/expansion of related entities
 	for _, expand := range query.Expand {
-		mainQuery = mainQuery.Preload(expand)
+		db = db.Preload(expand)
 	}
 
 	// Handle sorting
 	if query.SortBy != "" {
-		mainQuery = mainQuery.Order(query.SortBy)
+		db = db.Order(query.SortBy)
 	}
 
 	// Execute the query
-	err := mainQuery.Find(&datas).Error
-	if err != nil {
+	if err := db.Find(&datas).Error; err != nil {
 		return nil, err
 	}
 

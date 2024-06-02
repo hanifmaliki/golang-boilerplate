@@ -50,8 +50,7 @@ func (r *userRepository) Find(ctx context.Context, request *model.GetUserRequest
 	var pagination *pkg_model.Pagination
 	if query.Page > 0 && query.PageSize > 0 {
 		var totalItems int64
-		err := db.Model(&entity.User{}).Count(&totalItems).Error
-		if err != nil {
+		if err := db.Model(&entity.User{}).Count(&totalItems).Error; err != nil {
 			return nil, nil, err
 		}
 
