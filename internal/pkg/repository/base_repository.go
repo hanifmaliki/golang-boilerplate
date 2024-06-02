@@ -11,9 +11,10 @@ import (
 
 type BaseRepository[T any] interface {
 	Create(ctx context.Context, data *T, by string) error
-	Save(ctx context.Context, data *T, by string) error
 	Update(ctx context.Context, data *T, conds *T, by string) error
+	CreateOrUpdate(ctx context.Context, data *T, by string) error
 	Delete(ctx context.Context, conds *T, by string) error
+	HardDelete(ctx context.Context, conds *T) error
 	FindOne(ctx context.Context, conds *T, query *model.Query) (*T, error)
 	Count(ctx context.Context, conds *T) (int64, error)
 }
@@ -40,18 +41,18 @@ func (r *baseRepository[T]) Create(ctx context.Context, data *T, by string) erro
 	return r.db.WithContext(ctx).Create(data).Error
 }
 
-func (r *baseRepository[T]) Save(ctx context.Context, data *T, by string) error {
+func (r *baseRepository[T]) Update(ctx context.Context, data *T, conds *T, by string) error {
+	setField(data, "UpdatedBy", by)
+	return r.db.WithContext(ctx).Model(new(T)).Where(conds).Updates(data).Error
+}
+
+func (r *baseRepository[T]) CreateOrUpdate(ctx context.Context, data *T, by string) error {
 	idField := reflect.ValueOf(data).Elem().FieldByName("ID")
 	if idField.IsValid() && idField.Kind() == reflect.Uint && idField.Uint() == 0 {
 		setField(data, "CreatedBy", by)
 	}
 	setField(data, "UpdatedBy", by)
 	return r.db.WithContext(ctx).Save(data).Error
-}
-
-func (r *baseRepository[T]) Update(ctx context.Context, data *T, conds *T, by string) error {
-	setField(data, "UpdatedBy", by)
-	return r.db.WithContext(ctx).Model(new(T)).Where(conds).Updates(data).Error
 }
 
 func (r *baseRepository[T]) Delete(ctx context.Context, conds *T, by string) error {
@@ -62,6 +63,10 @@ func (r *baseRepository[T]) Delete(ctx context.Context, conds *T, by string) err
 		}
 		return tx.Where(conds).Delete(new(T)).Error
 	})
+}
+
+func (r *baseRepository[T]) HardDelete(ctx context.Context, conds *T) error {
+	return r.db.WithContext(ctx).Unscoped().Where(conds).Delete(new(T)).Error
 }
 
 func (r *baseRepository[T]) FindOne(ctx context.Context, conds *T, query *model.Query) (*T, error) {

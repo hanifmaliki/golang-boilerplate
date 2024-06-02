@@ -58,7 +58,7 @@ func TestCreate(t *testing.T) {
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 
-func TestSave(t *testing.T) {
+func TestCreateOrUpdate(t *testing.T) {
 	gormDB, mock, err := postgres.NewMockDB()
 	assert.NoError(t, err)
 	repo := NewBaseRepository[entity.User](gormDB)
@@ -87,7 +87,7 @@ func TestSave(t *testing.T) {
 			CompanyID: companyID,
 		}
 
-		err := repo.Save(ctx, data, "creator")
+		err := repo.CreateOrUpdate(ctx, data, "creator")
 		assert.NoError(t, err)
 		assert.NotNil(t, data)
 		assert.Equal(t, userID, data.ID)
@@ -130,7 +130,7 @@ func TestSave(t *testing.T) {
 			CompanyID: companyID,
 		}
 
-		err := repo.Save(ctx, data, "updater")
+		err := repo.CreateOrUpdate(ctx, data, "updater")
 		assert.NoError(t, err)
 		assert.NotNil(t, data)
 		assert.Equal(t, userID, data.ID)
@@ -190,6 +190,24 @@ func TestDelete(t *testing.T) {
 
 	conds := &entity.User{Base: pkg_model.Base{ID: 1}}
 	err = repo.Delete(ctx, conds, "eraser")
+	assert.NoError(t, err)
+
+	assert.Nil(t, mock.ExpectationsWereMet())
+}
+
+func TestHardDelete(t *testing.T) {
+	gormDB, mock, err := postgres.NewMockDB()
+	assert.NoError(t, err)
+	repo := NewBaseRepository[entity.User](gormDB)
+	ctx := context.Background()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`DELETE FROM "users" WHERE "users"."id" = \$1`).
+		WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	conds := &entity.User{Base: pkg_model.Base{ID: 1}}
+	err = repo.HardDelete(ctx, conds)
 	assert.NoError(t, err)
 
 	assert.Nil(t, mock.ExpectationsWereMet())
