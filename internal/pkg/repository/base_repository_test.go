@@ -25,7 +25,7 @@ func TestCreate(t *testing.T) {
 	ctx := context.Background()
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","company_id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9\) RETURNING "id"`).
+	mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","phone_number","company_id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10\) RETURNING "id"`).
 		WithArgs(
 			sqlmock.AnyArg(),          // created_at
 			sqlmock.AnyArg(),          // updated_at
@@ -35,6 +35,7 @@ func TestCreate(t *testing.T) {
 			"",                        // deleted_by
 			"Hanif Maliki Dewanto",    // name
 			"hanifmaliki97@gmail.com", // email
+			nil,                       // phone_number
 			companyID,                 // company_id
 		).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(userID))
 	mock.ExpectCommit()
@@ -53,6 +54,7 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, "creator", data.UpdatedBy)
 	assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
 	assert.Equal(t, "hanifmaliki97@gmail.com", data.Email)
+	assert.Nil(t, data.PhoneNumber)
 	assert.Equal(t, companyID, data.CompanyID)
 
 	assert.Nil(t, mock.ExpectationsWereMet())
@@ -67,7 +69,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		ctx := context.Background()
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","company_id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9\) RETURNING "id"`).
+		mock.ExpectQuery(`INSERT INTO "users" \("created_at","updated_at","deleted_at","created_by","updated_by","deleted_by","name","email","phone_number","company_id"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10\) RETURNING "id"`).
 			WithArgs(
 				sqlmock.AnyArg(),          // created_at
 				sqlmock.AnyArg(),          // updated_at
@@ -77,14 +79,17 @@ func TestCreateOrUpdate(t *testing.T) {
 				"",                        // deleted_by
 				"Hanif Maliki Dewanto",    // name
 				"hanifmaliki97@gmail.com", // email
+				"",                        // phone_number
 				companyID,                 // company_id
 			).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(userID))
 		mock.ExpectCommit()
 
+		phoneNumber := ""
 		data := &entity.User{
-			Name:      "Hanif Maliki Dewanto",
-			Email:     "hanifmaliki97@gmail.com",
-			CompanyID: companyID,
+			Name:        "Hanif Maliki Dewanto",
+			Email:       "hanifmaliki97@gmail.com",
+			CompanyID:   companyID,
+			PhoneNumber: &phoneNumber,
 		}
 
 		err := repo.CreateOrUpdate(ctx, data, "creator")
@@ -95,6 +100,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		assert.Equal(t, "creator", data.UpdatedBy)
 		assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
 		assert.Equal(t, "hanifmaliki97@gmail.com", data.Email)
+		assert.Equal(t, "", *data.PhoneNumber)
 		assert.Equal(t, companyID, data.CompanyID)
 
 		assert.Nil(t, mock.ExpectationsWereMet())
@@ -104,7 +110,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		ctx := context.Background()
 
 		mock.ExpectBegin()
-		mock.ExpectExec(`UPDATE "users" SET "created_at"=\$1,"updated_at"=\$2,"deleted_at"=\$3,"created_by"=\$4,"updated_by"=\$5,"deleted_by"=\$6,"name"=\$7,"email"=\$8,"company_id"=\$9 WHERE "users"."deleted_at" IS NULL AND "id" = \$10`).
+		mock.ExpectExec(`UPDATE "users" SET "created_at"=\$1,"updated_at"=\$2,"deleted_at"=\$3,"created_by"=\$4,"updated_by"=\$5,"deleted_by"=\$6,"name"=\$7,"email"=\$8,"phone_number"=\$9,"company_id"=\$10 WHERE "users"."deleted_at" IS NULL AND "id" = \$11`).
 			WithArgs(
 				sqlmock.AnyArg(),          // created_at
 				sqlmock.AnyArg(),          // updated_at
@@ -114,6 +120,7 @@ func TestCreateOrUpdate(t *testing.T) {
 				"",                        // deleted_by
 				"Hanif Maliki Dewanto",    // name
 				"hanifmaliki97@gmail.com", // email
+				nil,                       // phone_number
 				companyID,                 // company_id
 				userID,                    // id
 			).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -138,6 +145,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		assert.Equal(t, "updater", data.UpdatedBy)
 		assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
 		assert.Equal(t, "hanifmaliki97@gmail.com", data.Email)
+		assert.Nil(t, data.PhoneNumber)
 		assert.Equal(t, companyID, data.CompanyID)
 
 		assert.Nil(t, mock.ExpectationsWereMet())
@@ -151,21 +159,22 @@ func TestUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`UPDATE "users" SET "updated_at"=\$1,"updated_by"=\$2,"name"=\$3,"email"=\$4,"company_id"=\$5 WHERE "users"."id" = \$6 AND "users"."deleted_at" IS NULL`).
+	mock.ExpectExec(`UPDATE "users" SET "updated_at"=\$1,"updated_by"=\$2,"name"=\$3,"phone_number"=\$4,"company_id"=\$5 WHERE "users"."id" = \$6 AND "users"."deleted_at" IS NULL`).
 		WithArgs(
-			sqlmock.AnyArg(),          // updated_at
-			"updater",                 // updated_by
-			"Hanif Maliki Dewanto",    // name
-			"hanifmaliki97@gmail.com", // email
-			companyID,                 // company_id
-			userID,                    // id
+			sqlmock.AnyArg(),       // updated_at
+			"updater",              // updated_by
+			"Hanif Maliki Dewanto", // name
+			"",                     // phone_number
+			companyID,              // company_id
+			userID,                 // id
 		).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
+	phoneNumber := ""
 	data := &entity.User{
-		Name:      "Hanif Maliki Dewanto",
-		Email:     "hanifmaliki97@gmail.com",
-		CompanyID: companyID,
+		Name:        "Hanif Maliki Dewanto",
+		PhoneNumber: &phoneNumber,
+		CompanyID:   companyID,
 	}
 	conds := &entity.User{Base: pkg_model.Base{ID: 1}}
 
@@ -221,8 +230,8 @@ func TestFindOne(t *testing.T) {
 	t.Run("No Query", func(t *testing.T) {
 		ctx := context.Background()
 
-		rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "company_id"}).
-			AddRow(userID, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", companyID)
+		rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "phone_number", "company_id"}).
+			AddRow(userID, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", "083145673831", companyID)
 		mock.ExpectQuery(`SELECT \* FROM "users" WHERE "users"."id" = \$1 AND "users"."deleted_at" IS NULL ORDER BY "users"."id" LIMIT \$2`).
 			WithArgs(userID, 1).WillReturnRows(rows)
 
@@ -237,6 +246,7 @@ func TestFindOne(t *testing.T) {
 		assert.Equal(t, "updater", data.UpdatedBy)
 		assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
 		assert.Equal(t, "hanifmaliki97@gmail.com", data.Email)
+		assert.Equal(t, "083145673831", *data.PhoneNumber)
 		assert.Equal(t, companyID, data.CompanyID)
 
 		assert.Nil(t, mock.ExpectationsWereMet())
@@ -245,8 +255,8 @@ func TestFindOne(t *testing.T) {
 	t.Run("With Query", func(t *testing.T) {
 		ctx := context.Background()
 
-		rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "company_id"}).
-			AddRow(userID, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", companyID)
+		rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "phone_number", "company_id"}).
+			AddRow(userID, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", "", companyID)
 		mock.ExpectQuery(`SELECT \* FROM "users" WHERE "users"."id" = \$1 AND "users"."deleted_at" IS NULL ORDER BY id desc,"users"."id" LIMIT \$2`).
 			WithArgs(userID, 1).WillReturnRows(rows)
 
@@ -275,6 +285,7 @@ func TestFindOne(t *testing.T) {
 		assert.Equal(t, "updater", data.UpdatedBy)
 		assert.Equal(t, "Hanif Maliki Dewanto", data.Name)
 		assert.Equal(t, "hanifmaliki97@gmail.com", data.Email)
+		assert.Equal(t, "", *data.PhoneNumber)
 		assert.Equal(t, companyID, data.CompanyID)
 
 		assert.Equal(t, companyID, data.Company.ID)

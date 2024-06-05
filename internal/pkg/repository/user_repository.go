@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"math"
+	"strings"
 
 	"github.com/hanifmaliki/golang-boilerplate/internal/pkg/entity"
 	"github.com/hanifmaliki/golang-boilerplate/internal/pkg/model"
@@ -32,8 +33,8 @@ func (r *userRepository) Find(ctx context.Context, request *model.GetUserRequest
 
 	// Apply filters
 	if request.Search != "" {
-		search := "%" + request.Search + "%"
-		db = db.Where("name LIKE ? OR email LIKE ?", search, search)
+		search := "%" + strings.ToLower(request.Search) + "%"
+		db = db.Where("LOWER(name) LIKE ? OR LOWER(email) LIKE ?", search, search)
 	}
 	if len(request.CompanyID) > 0 {
 		db = db.Where("company_id = ?", request.CompanyID)

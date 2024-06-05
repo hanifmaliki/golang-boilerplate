@@ -7,9 +7,10 @@ type GetUserRequest struct {
 }
 
 type CreateUserRequest struct {
-	Name      string
-	Email     string
-	CompanyID uint
+	Name        string
+	Email       string
+	PhoneNumber string
+	CompanyID   uint
 
 	Address     *CreateAddressRequest
 	CreditCards []*CreateCreditCardRequest
@@ -17,10 +18,11 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	ID        uint
-	Name      string
-	Email     string
-	CompanyID uint
+	ID          uint
+	Name        string
+	Email       string
+	PhoneNumber string
+	CompanyID   uint
 
 	Address     *UpdateAddressRequest
 	CreditCards []*UpdateCreditCardRequest

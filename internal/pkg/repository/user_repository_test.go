@@ -45,11 +45,15 @@ func TestFindUsers(t *testing.T) {
 	t.Run("With Query", func(t *testing.T) {
 		ctx := context.Background()
 
-		rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "company_id"}).
-			AddRow(userID, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", companyID).
-			AddRow(2, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", 3)
-		mock.ExpectQuery(`SELECT \* FROM "users" WHERE "users"."deleted_at" IS NULL`).
-			WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT count\(\*\) FROM "users" WHERE \(LOWER\(name\) LIKE \$1 OR LOWER\(email\) LIKE \$2\) AND company_id = \(\$3,\$4\) AND id IN \(SELECT user_id FROM "user_roles" WHERE role_id IN \(\$5\)\) AND "users"."deleted_at" IS NULL`).
+			WithArgs("%hanif maliki%", "%hanif maliki%", 2, 3, 4).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(12))
+
+		rows := sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name", "email", "phone_number", "company_id"}).
+			AddRow(userID, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", "083145673831", companyID).
+			AddRow(2, "creator", "updater", "Hanif Maliki Dewanto", "hanifmaliki97@gmail.com", "083145673831", 3)
+		mock.ExpectQuery(`SELECT \* FROM "users" WHERE \(LOWER\(name\) LIKE \$1 OR LOWER\(email\) LIKE \$2\) AND company_id = \(\$3,\$4\) AND id IN \(SELECT user_id FROM "user_roles" WHERE role_id IN \(\$5\)\) AND "users"."deleted_at" IS NULL ORDER BY id desc LIMIT \$6 OFFSET \$7`).
+			WithArgs("%hanif maliki%", "%hanif maliki%", 2, 3, 4, 3, 3).WillReturnRows(rows)
 
 		rows = sqlmock.NewRows([]string{"id", "created_by", "updated_by", "name"}).
 			AddRow(companyID, "creator", "updater", "Petrosea").
@@ -63,21 +67,30 @@ func TestFindUsers(t *testing.T) {
 		mock.ExpectQuery(`SELECT \* FROM "credit_cards" WHERE "credit_cards"."user_id" IN \(\$1,\$2\) AND "credit_cards"."deleted_at" IS NULL`).
 			WithArgs(userID, 2).WillReturnRows(rows)
 
-		request := &model.GetUserRequest{}
+		request := &model.GetUserRequest{
+			Search:    "Hanif Maliki",
+			CompanyID: []uint{2, 3},
+			RoleID:    []uint{4},
+		}
 		query := &pkg_model.Query{
-			SortBy: "id desc",
-			Expand: []string{"Company", "CreditCards"},
+			Page:     2,
+			PageSize: 3,
+			SortBy:   "id desc",
+			Expand:   []string{"Company", "CreditCards"},
 		}
 		data, pagination, err := repo.Find(ctx, request, query)
 		assert.NoError(t, err)
 		assert.NotNil(t, data)
-		assert.Nil(t, pagination)
+		assert.EqualValues(t, &pkg_model.Pagination{
+			Page: 2, PageSize: 3, TotalItems: 12, TotalPages: 4,
+		}, pagination)
 
 		assert.Equal(t, userID, data[0].ID)
 		assert.Equal(t, "creator", data[0].CreatedBy)
 		assert.Equal(t, "updater", data[0].UpdatedBy)
 		assert.Equal(t, "Hanif Maliki Dewanto", data[0].Name)
 		assert.Equal(t, "hanifmaliki97@gmail.com", data[0].Email)
+		assert.Equal(t, "083145673831", *data[0].PhoneNumber)
 		assert.Equal(t, companyID, data[0].CompanyID)
 
 		assert.Equal(t, companyID, data[0].Company.ID)
