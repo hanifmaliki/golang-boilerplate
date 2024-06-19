@@ -18,3 +18,15 @@ type Base struct {
 	UpdatedBy string `json:"updated_by"`
 	DeletedBy string `json:"deleted_dy"`
 }
+
+func (m *Base) GetID() uint {
+	return m.ID
+}
+
+func (m *Base) SetCreatedBy(by string) {
+	m.CreatedBy = by
+}
+
+func (m *Base) SetUpdatedBy(by string) {
+	m.UpdatedBy = by
+}

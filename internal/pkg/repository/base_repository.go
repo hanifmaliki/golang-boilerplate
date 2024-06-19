@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"reflect"
+	"errors"
 
 	"github.com/hanifmaliki/golang-boilerplate/pkg/model"
 
@@ -27,31 +27,59 @@ func NewBaseRepository[T any](db *gorm.DB) BaseRepository[T] {
 	return &baseRepository[T]{db: db}
 }
 
-func setField(data interface{}, fieldName, value string) {
-	v := reflect.ValueOf(data).Elem()
-	field := v.FieldByName(fieldName)
-	if field.IsValid() && field.CanSet() && field.Kind() == reflect.String {
-		field.SetString(value)
-	}
+// func setField(data interface{}, fieldName, value string) {
+// 	v := reflect.ValueOf(data).Elem()
+// 	field := v.FieldByName(fieldName)
+// 	if field.IsValid() && field.CanSet() && field.Kind() == reflect.String {
+// 		field.SetString(value)
+// 	}
+// }
+
+type Base interface {
+	GetID() uint
+	SetCreatedBy(by string)
+	SetUpdatedBy(by string)
 }
 
 func (r *baseRepository[T]) Create(ctx context.Context, data *T, by string) error {
-	setField(data, "CreatedBy", by)
-	setField(data, "UpdatedBy", by)
+	// setField(data, "CreatedBy", by)
+	// setField(data, "UpdatedBy", by)
+	if base, ok := any(data).(Base); ok {
+		base.SetCreatedBy(by)
+		base.SetUpdatedBy(by)
+	} else {
+		return errors.New("data does not implement Base interface")
+	}
+
 	return r.db.WithContext(ctx).Create(data).Error
 }
 
 func (r *baseRepository[T]) Update(ctx context.Context, data *T, conds *T, by string) error {
-	setField(data, "UpdatedBy", by)
+	// setField(data, "UpdatedBy", by)
+	if base, ok := any(data).(Base); ok {
+		base.SetUpdatedBy(by)
+	} else {
+		return errors.New("data does not implement Base interface")
+	}
+
 	return r.db.WithContext(ctx).Model(new(T)).Where(conds).Updates(data).Error
 }
 
 func (r *baseRepository[T]) CreateOrUpdate(ctx context.Context, data *T, by string) error {
-	idField := reflect.ValueOf(data).Elem().FieldByName("ID")
-	if idField.IsValid() && idField.Kind() == reflect.Uint && idField.Uint() == 0 {
-		setField(data, "CreatedBy", by)
+	// idField := reflect.ValueOf(data).Elem().FieldByName("ID")
+	// if idField.IsValid() && idField.Kind() == reflect.Uint && idField.Uint() == 0 {
+	// 	setField(data, "CreatedBy", by)
+	// }
+	// setField(data, "UpdatedBy", by)
+	if base, ok := any(data).(Base); ok {
+		if base.GetID() == 0 {
+			base.SetCreatedBy(by)
+		}
+		base.SetUpdatedBy(by)
+	} else {
+		return errors.New("data does not implement Base interface")
 	}
-	setField(data, "UpdatedBy", by)
+
 	return r.db.WithContext(ctx).Save(data).Error
 }
 
